@@ -7,6 +7,7 @@ linkedin-search is a Python repository for searching data on LinkedIn.
 1. Clone the repository:
 ```bash
 git clone git@github.com:naivebird/linkedin-search.git
+cd linkedin-search
 pip install -r requirements.txt
 ```
 2. Download geckodriver (https://github.com/mozilla/geckodriver/releases) and copy it to your virtualenv/bin folder.
