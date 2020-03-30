@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from linkedin_search.config import load_config
-from linkedin_search.decorators import login_required, account_rotation, cached_property, reload_session
+from linkedin_search.decorators import login_required, account_rotation, reload_session
 from linkedin_search.enpoints import LOG_IN, JOB_SEARCH_URL, SEARCH_URL, build_job_search_params, build_search_params
 from linkedin_search.session import CrawlerSession
 
@@ -238,3 +238,74 @@ class LinkedInSearch(object):
                             result_type='GROUPS',
                             count=count,
                             start=start)
+
+
+if __name__ == '__main__':
+    import json
+
+    # logging.basicConfig(level=logging.DEBUG)
+    # logging.getLogger('selenium').setLevel(logging.INFO)
+    # logging.getLogger('urllib3').setLevel(logging.INFO)
+    linkedin = LinkedInSearch(email='tp7.snowleopard@gmail.com',
+                              password='tenpoint72019',
+                              min_delay_time=1,
+                              max_delay_time=3)
+    linkedin.log_in()
+    results = linkedin.search_jobs(keywords='software',
+                                   location='Canada',
+                                   count=49,
+                                   start=0,
+                                   date_posted='Past Month',
+                                   linkedin_features=['Under 10 Applicants'],
+                                   experience_level=['Associate', 'Mid-Senior level'],
+                                   company=['1586', '2646', '3589'],
+                                   job_function=['eng', 'it'],
+                                   industry=['4', '6'],
+                                   job_type=['Full-time'],
+                                   title=['9', '270'],
+                                   location_id=['103366113']
+                                   )
+    # print(json.dumps(results, indent=4))
+
+    # results = linkedin.search_schools('cloud')
+    # print(json.dumps(results, indent=4))
+    count = 5
+    start = 0
+    data = []
+    while True:
+        # results = linkedin.search_people(count=count,
+        #                                  start=start,
+        #                                  past_company=['1009', '1035'],
+        #                                  geo_region=['us', 'in', 'vn', 'gb', 'sg'],
+        #                                  industry=['96', '137'],
+        #                                  # network=['F', 'S'],
+        #                                  profile_language=['en'],
+        #                                  # connection_of='ACoAABue12wBU8XczWvO19MP3aI7okMSOymfVEc',
+        #                                  # first_name='alex',
+        #                                  title='CEO')
+        results = linkedin.search_jobs(keywords='software',
+                                       location='Canada',
+                                       count=49,
+                                       start=0,
+                                       date_posted='Past Month',
+                                       linkedin_features=['Under 10 Applicants'],
+                                       experience_level=['Associate', 'Mid-Senior level'],
+                                       company=['1586', '2646', '3589'],
+                                       job_function=['eng', 'it'],
+                                       industry=['4', '6'],
+                                       job_type=['Full-time'],
+                                       title=['9', '270'],
+                                       location_id=['103366113']
+                                       )
+        print(json.dumps(results, indent=4))
+        data.append(results)
+        total = results['data']['paging'].get('total', 0)
+        print('total', total)
+        if total <= count + start:
+            break
+        else:
+            start += count
+            count = min(count, total - start)
+            print('start: {}, count: {}'.format(start, count))
+    print('length data', len(data))
+
