@@ -27,8 +27,8 @@ def account_rotation(func):
         new_account = pool.__next__()
         used_accounts = []
         while new_account not in used_accounts:
-            used_accounts.append(new_account)
             try:
+                used_accounts.append(new_account)
                 return func(*args, **kwargs)
             except RequestException as e:
                 logger.exception(e)

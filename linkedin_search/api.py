@@ -41,16 +41,18 @@ class LinkedInSearch(object):
                                        max_delay_time=max_delay_time)
         self._session.headers.update(self.HEADERS)
         self.email, self.password = (email, password) or load_config()
-        self.session_file = join(dirname(__file__), 'sessions/{email}'.format(email=self.email))
         self.is_logged_in = False
+
+    @property
+    def session_file(self):
+        return join(dirname(__file__), 'sessions/{email}'.format(email=self.email))
 
     def log_in(self):
         try:
             self.load_session()
             self.is_logged_in = True
-            logger.debug('Loaded session from local file.')
         except IOError:
-            logger.debug('Session file not found, creating a new session.')
+            logger.debug('Session file not found, creating a new one.')
             self._create_session(email=self.email, password=self.password)
             self.load_session()
             self.is_logged_in = True
@@ -58,6 +60,7 @@ class LinkedInSearch(object):
     def load_session(self):
         with open(self.session_file, 'rb') as f:
             cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
+            logger.debug("Loaded cookies from {}".format(self.session_file))
             self._session.cookies = cookies
             csrf_token = self._session.cookies.get('JSESSIONID').replace('\"', "")
             self._session.headers.update(
@@ -65,8 +68,6 @@ class LinkedInSearch(object):
                     'csrf-token': csrf_token
                 }
             )
-
-            logger.debug("Loaded cookies from session file")
 
     @staticmethod
     def _element_exists(driver, element_id):
@@ -106,9 +107,6 @@ class LinkedInSearch(object):
             with open(self.session_file, 'wb') as f:
                 pickle.dump(collected, f, protocol=2)
         logger.debug("Session has been seeded, LinkedIn crawler is ready for use.")
-
-    def new_session(self):
-        self._create_session(email=self.email, password=self.password)
 
     @login_required
     @account_rotation
@@ -238,74 +236,3 @@ class LinkedInSearch(object):
                             result_type='GROUPS',
                             count=count,
                             start=start)
-
-
-if __name__ == '__main__':
-    import json
-
-    # logging.basicConfig(level=logging.DEBUG)
-    # logging.getLogger('selenium').setLevel(logging.INFO)
-    # logging.getLogger('urllib3').setLevel(logging.INFO)
-    linkedin = LinkedInSearch(email='tp7.snowleopard@gmail.com',
-                              password='tenpoint72019',
-                              min_delay_time=1,
-                              max_delay_time=3)
-    linkedin.log_in()
-    results = linkedin.search_jobs(keywords='software',
-                                   location='Canada',
-                                   count=49,
-                                   start=0,
-                                   date_posted='Past Month',
-                                   linkedin_features=['Under 10 Applicants'],
-                                   experience_level=['Associate', 'Mid-Senior level'],
-                                   company=['1586', '2646', '3589'],
-                                   job_function=['eng', 'it'],
-                                   industry=['4', '6'],
-                                   job_type=['Full-time'],
-                                   title=['9', '270'],
-                                   location_id=['103366113']
-                                   )
-    # print(json.dumps(results, indent=4))
-
-    # results = linkedin.search_schools('cloud')
-    # print(json.dumps(results, indent=4))
-    count = 5
-    start = 0
-    data = []
-    while True:
-        # results = linkedin.search_people(count=count,
-        #                                  start=start,
-        #                                  past_company=['1009', '1035'],
-        #                                  geo_region=['us', 'in', 'vn', 'gb', 'sg'],
-        #                                  industry=['96', '137'],
-        #                                  # network=['F', 'S'],
-        #                                  profile_language=['en'],
-        #                                  # connection_of='ACoAABue12wBU8XczWvO19MP3aI7okMSOymfVEc',
-        #                                  # first_name='alex',
-        #                                  title='CEO')
-        results = linkedin.search_jobs(keywords='software',
-                                       location='Canada',
-                                       count=49,
-                                       start=0,
-                                       date_posted='Past Month',
-                                       linkedin_features=['Under 10 Applicants'],
-                                       experience_level=['Associate', 'Mid-Senior level'],
-                                       company=['1586', '2646', '3589'],
-                                       job_function=['eng', 'it'],
-                                       industry=['4', '6'],
-                                       job_type=['Full-time'],
-                                       title=['9', '270'],
-                                       location_id=['103366113']
-                                       )
-        print(json.dumps(results, indent=4))
-        data.append(results)
-        total = results['data']['paging'].get('total', 0)
-        print('total', total)
-        if total <= count + start:
-            break
-        else:
-            start += count
-            count = min(count, total - start)
-            print('start: {}, count: {}'.format(start, count))
-    print('length data', len(data))
-
