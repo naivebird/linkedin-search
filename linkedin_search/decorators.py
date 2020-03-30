@@ -10,6 +10,14 @@ from linkedin_search.exceptions import LinkedInError
 logger = logging.getLogger('Decorators')
 
 
+def reload_session(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        args[0].load_session()
+        return result
+    return wrapper
+
+
 def account_rotation(func):
     """
     Change to a new account if the current one gets block, not reuse.
@@ -47,3 +55,20 @@ def login_required(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+class cached_property(object):
+    def __init__(self, func, name=None, doc=None):
+        self.__name__ = name or func.__name__
+        self.__module__ = func.__module__
+        self.__doc__ = doc or func.__doc__
+        self.func = func
+
+    def __get__(self, obj, type=None):
+        if obj is None:
+            return self
+        value = obj.__dict__.get(self.__name__, None)
+        if value is None:
+            value = self.func(obj)
+            obj.__dict__[self.__name__] = value
+        return value

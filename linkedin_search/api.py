@@ -13,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from linkedin_search.config import load_config
-from linkedin_search.decorators import login_required, account_rotation
+from linkedin_search.decorators import login_required, account_rotation, cached_property, reload_session
 from linkedin_search.enpoints import LOG_IN, JOB_SEARCH_URL, SEARCH_URL, build_job_search_params, build_search_params
 from linkedin_search.session import CrawlerSession
 
@@ -46,16 +46,16 @@ class LinkedInSearch(object):
 
     def log_in(self):
         try:
-            self._load_session()
+            self.load_session()
             self.is_logged_in = True
             logger.debug('Loaded session from local file.')
         except IOError:
             logger.debug('Session file not found, creating a new session.')
             self._create_session(email=self.email, password=self.password)
-            self._load_session()
+            self.load_session()
             self.is_logged_in = True
 
-    def _load_session(self):
+    def load_session(self):
         with open(self.session_file, 'rb') as f:
             cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
             self._session.cookies = cookies
@@ -112,6 +112,7 @@ class LinkedInSearch(object):
 
     @login_required
     @account_rotation
+    @reload_session
     def search_jobs(self, keywords=None, location=None, sort_by='Most relevant', count=10, start=0, **kwargs):
         """
         Search for jobs on LinkedIn
@@ -152,6 +153,7 @@ class LinkedInSearch(object):
 
     @login_required
     @account_rotation
+    @reload_session
     def _search(self, keywords, count, start, **kwargs):
         params = build_search_params(filters=kwargs,
                                      keywords=keywords,
