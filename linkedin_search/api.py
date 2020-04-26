@@ -40,7 +40,7 @@ class LinkedInSearch(object):
         self._session = CrawlerSession(min_delay_time=min_delay_time,
                                        max_delay_time=max_delay_time)
         self._session.headers.update(self.HEADERS)
-        self.email, self.password = (email, password) or load_config()
+        self.email, self.password = (email, password) if email and password else load_config()
         self.is_logged_in = False
 
     @property
